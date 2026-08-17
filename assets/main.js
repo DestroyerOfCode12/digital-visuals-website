@@ -52,6 +52,17 @@ document.addEventListener("DOMContentLoaded", function () {
   if (revealTargets.length) {
     revealTargets.forEach(function (el) {
       el.classList.add("reveal");
+      // Stagger cards/steps/badges that share a parent so a row arrives as
+      // a short wave (60ms per item, capped) instead of popping in at once.
+      var siblings = el.parentElement
+        ? Array.prototype.filter.call(el.parentElement.children, function (c) {
+            return c === el || (c.matches && c.matches(".card, .step, .location-card, .badge-item"));
+          })
+        : [el];
+      var position = siblings.indexOf(el);
+      if (position > 0) {
+        el.style.setProperty("--reveal-delay", Math.min(position * 60, 360) + "ms");
+      }
     });
 
     if (reduceMotion || !("IntersectionObserver" in window)) {
@@ -72,6 +83,49 @@ document.addEventListener("DOMContentLoaded", function () {
       );
       revealTargets.forEach(function (el) {
         io.observe(el);
+      });
+    }
+  }
+
+  /* ---------------- Hero stat count-up ---------------- */
+  var statEls = document.querySelectorAll(".stat .num[data-count-to]");
+  if (statEls.length) {
+    function animateStat(el) {
+      var target = parseInt(el.getAttribute("data-count-to"), 10);
+      var suffix = el.getAttribute("data-suffix") || "";
+      if (reduceMotion || isNaN(target)) {
+        el.textContent = target + suffix;
+        return;
+      }
+      var start = null;
+      var duration = 900;
+      function step(ts) {
+        if (start === null) start = ts;
+        var progress = Math.min((ts - start) / duration, 1);
+        var eased = 1 - Math.pow(1 - progress, 3);
+        el.textContent = Math.round(eased * target) + suffix;
+        if (progress < 1) requestAnimationFrame(step);
+        else el.textContent = target + suffix;
+      }
+      requestAnimationFrame(step);
+    }
+
+    if (reduceMotion || !("IntersectionObserver" in window)) {
+      statEls.forEach(animateStat);
+    } else {
+      var statIo = new IntersectionObserver(
+        function (entries) {
+          entries.forEach(function (entry) {
+            if (entry.isIntersecting) {
+              animateStat(entry.target);
+              statIo.unobserve(entry.target);
+            }
+          });
+        },
+        { threshold: 0.6 }
+      );
+      statEls.forEach(function (el) {
+        statIo.observe(el);
       });
     }
   }
