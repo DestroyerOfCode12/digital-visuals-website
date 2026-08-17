@@ -273,6 +273,28 @@ nav.main-nav a:hover, nav.main-nav a.active { color: var(--navy); border-color: 
 
 .hero-art { position: relative; }
 
+/* Digital billboard hero: two ad creatives cross-fade on a loop, like the
+   real product — a screen that keeps showing something. 8s cycle, phase-
+   shifted by half so one slide is always fully visible. */
+@media (prefers-reduced-motion: no-preference) {
+  .billboard-slide { animation: billboard-cycle 8s ease-in-out infinite; }
+  .billboard-slide-b { animation-delay: -4s; }
+  .billboard-live circle { animation: billboard-pulse 1.8s ease-in-out infinite; transform-origin: 368px 146px; }
+}
+@keyframes billboard-cycle {
+  0%, 40% { opacity: 1; }
+  50%, 90% { opacity: 0; }
+  100% { opacity: 1; }
+}
+@keyframes billboard-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.45; transform: scale(0.8); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .billboard-slide-b { opacity: 0; }
+  .billboard-live circle { opacity: 1; }
+}
+
 /* ---- Cards / grids ---- */
 .grid { display: grid; gap: 28px; }
 .grid-3 { grid-template-columns: repeat(3, 1fr); }
@@ -285,6 +307,15 @@ nav.main-nav a:hover, nav.main-nav a.active { color: var(--navy); border-color: 
   border-radius: var(--radius);
   padding: 30px 26px;
   box-shadow: var(--shadow-sm);
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+.card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(245, 166, 35, 0.4);
+  box-shadow: 0 16px 32px rgba(11, 31, 59, 0.12), 0 0 0 1px rgba(245, 166, 35, 0.12);
+}
+@media (prefers-reduced-motion: reduce) {
+  .card:hover { transform: none; }
 }
 .card .icon-badge {
   width: 48px; height: 48px;
@@ -297,7 +328,7 @@ nav.main-nav a:hover, nav.main-nav a.active { color: var(--navy); border-color: 
 
 .stat-row { display: flex; gap: 40px; flex-wrap: wrap; margin-top: 34px; }
 .stat { }
-.stat .num { font-family: "Poppins", sans-serif; font-size: 2rem; font-weight: 700; color: var(--navy); }
+.stat .num { font-family: "Poppins", sans-serif; font-size: 2rem; font-weight: 700; color: var(--navy); font-variant-numeric: tabular-nums; }
 .section-navy .stat .num { color: #fff; }
 .stat .label { font-size: 0.88rem; color: var(--text-muted); }
 .section-navy .stat .label { color: rgba(255,255,255,0.7); }
@@ -491,12 +522,16 @@ footer a:hover { color: var(--amber); }
 
 .divider { height: 1px; background: var(--border); margin: 60px 0 0; }
 
-/* ---- Scroll reveal (JS adds .reveal on load, .is-visible on intersect) ---- */
+/* ---- Scroll reveal (JS adds .reveal on load, .is-visible on intersect) ----
+   main.js also sets a --reveal-delay custom property per element, based on
+   its position within a shared .grid/.steps/.badge-list, so a row of cards
+   arrives as a short wave rather than all at once. */
 @media (prefers-reduced-motion: no-preference) {
   .reveal {
     opacity: 0;
     transform: translateY(18px);
     transition: opacity 0.55s ease, transform 0.55s ease;
+    transition-delay: var(--reveal-delay, 0s);
   }
   .reveal.is-visible {
     opacity: 1;
